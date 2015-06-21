@@ -1,0 +1,87 @@
+---
+title: "Roshan_PML_Project"
+author: "Roshan Shetty"
+date: "Sunday, June 21, 2015"
+output: html_document
+---
+
+The goal of the project is to predict the manner in which the group of enthusiasts did exercise. Since the dataset has a large number of variables, appropriate feature selection needs to be done. Before that,  parallel processing in R needs to be set up. It is done as follows.
+
+Note:The code has not been run in the knitted file as it would take a long time to run. The results obtained from the local system have been pasted wherever necessary.
+```{r, eval = FALSE}
+library(doParallel)
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
+```
+
+The input file is now loaded and unnecessary features are filtered out. These include columns with over 80% NA values, #DIV/0! values, timestamp, user name, window and summary statistics specific values.
+```{r, eval = FALSE}
+trainfile <- read.csv("pml-training.csv")
+
+
+trainSub <- trainfile[ , (colSums(is.na(trainfile)) <= 0.8*nrow(trainfile))]
+trainSub <- trainSub[,(colSums(trainSub[,] == "#DIV/0!")) == 0]
+
+features <- names(trainSub)
+toMatch <- c("timestamp","name","window","kurtosis","skewness")
+trainSub <- trainSub[,-grep(paste(toMatch,collapse="|"),features)]
+trainSub <- trainSub[,-1]
+trainSub <- trainSub[,-1]
+```
+
+A 3 fold cross validation was used on a 50% training set sample to train the Random Forests model. 
+```{r, eval = FALSE}
+modControl <- trainControl(method = "cv", number = 3)
+inTrain <- createDataPartition(y= trainSub$classe, p=0.5, list=FALSE)
+training <- trainSub[inTrain, ]
+testing <- trainSub[-inTrain, ]
+modFit <- train(classe ~ ., data = training, method = "rf", trControl = modControl, prox = TRUE)
+```
+
+The output of the model is as shown below:
+
+Random Forest 
+
+9812 samples
+  52 predictor
+   5 classes: 'A', 'B', 'C', 'D', 'E' 
+
+No pre-processing
+Resampling: Cross-Validated (3 fold) 
+
+Summary of sample sizes: 6541, 6541, 6542 
+
+Resampling results across tuning parameters:
+
+  mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
+   2    0.9821650  0.9774326  0.002468435  0.003123457
+  27    0.9841012  0.9798868  0.001616820  0.002044145
+  52    0.9796169  0.9742139  0.001269553  0.001603578
+
+Accuracy was used to select the optimal model using  the largest value.
+The final value used for the model was mtry = 27.
+
+The insample accuracy of the final model was 0.984 and the corresponding Kappa value is 0.979 which indicates a very good model. The real test is the out of sample error rate though. 
+
+```{r, eval = FALSE}
+pred <- predict(modFit, testing)
+table(pred, testing$classe)
+```
+The output in this case is:
+
+pred    A    B    C    D    E
+   A 2786    7    0    0    0
+   B    1 1881    7    1    1
+   C    0   10 1693   24    3
+   D    2    0   11 1582   13
+   E    1    0    0    1 1786
+   
+The out of sample error rate in this case is 0.835%. 
+On the final test sample the predictions were also made as follows. 
+```{r, eval = FALSE}
+testfile <- read.csv("pml-testing.csv")
+predOut <- predict(modFit, testfile)
+```
+
+The obtained output in this case is as follows:
+"B","A","B","A","A","E","D","B","A","A","B","C","B","A","E","E","A","B","B","B"
