@@ -40,24 +40,24 @@
 <h3>
 <a id="project-implementation-details" class="anchor" href="#project-implementation-details" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Implementation Details</h3>
 
-<p>The goal of the project is to predict the manner in which the group of enthusiasts did exercise. R has been used to implement the project. Since the dataset has a large number of variables, appropriate feature selection needs to be done. Before that, parallel processing in R needs to be set up. It is done as follows.
-<code>library(doParallel)</code>    </p>
+<p>The goal of the project is to predict the manner in which the group of enthusiasts did exercise. R has been used to implement the project. Since the dataset has a large number of variables, appropriate feature selection needs to be done. Before that, parallel processing in R needs to be set up. It is done as follows.</p>
 
-<p><code>cl &lt;- makeCluster(detectCores())</code></p>
+<pre lang="library(doParallel)"><code>cl &lt;- makeCluster(detectCores())
+registerDoParallel(cl)```
 
-<p><code>registerDoParallel(cl)</code></p>
+The input file is now loaded and unnecessary features are filtered out. These include columns with over 80% NA values, #DIV/0! values, timestamp, user name, window and summary statistics specific values.
 
-<p>The input file is now loaded and unnecessary features are filtered out. These include columns with over 80% NA values, #DIV/0! values, timestamp, user name, window and summary statistics specific values.</p>
+`trainfile &lt;- read.csv("pml-training.csv")
 
-<p>`trainfile &lt;- read.csv("pml-training.csv")</p>
+trainSub &lt;- trainfile[ , (colSums(is.na(trainfile)) &lt;= 0.8*nrow(trainfile))]
 
-<p>trainSub &lt;- trainfile[ , (colSums(is.na(trainfile)) &lt;= 0.8*nrow(trainfile))]</p>
+trainSub &lt;- trainSub[,(colSums(trainSub[,] == "#DIV/0!")) == 0]`
 
-<p>trainSub &lt;- trainSub[,(colSums(trainSub[,] == "#DIV/0!")) == 0]`</p>
+The input file is now loaded and unnecessary features are filtered out. These include columns with over 80% NA values, #DIV/0! values, timestamp, user name, window and summary statistics specific values.
 
-<p>The input file is now loaded and unnecessary features are filtered out. These include columns with over 80% NA values, #DIV/0! values, timestamp, user name, window and summary statistics specific values.</p>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="https://help.github.com/pages">https://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+Having trouble with Pages? Check out the documentation at https://help.github.com/pages or contact support@github.com and we’ll help you sort it out.
+</code></pre>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/Inquisitive-Geek/PML_Project_Roshan">Exercise Method Prediction Using Random Forests</a> is maintained by <a href="https://github.com/Inquisitive-Geek">Inquisitive-Geek</a>.</span>
