@@ -42,21 +42,71 @@
 
 <p>The goal of the project is to predict the manner in which the group of enthusiasts did exercise. R has been used to implement the project. Since the dataset has a large number of variables, appropriate feature selection needs to be done. Before that, parallel processing in R needs to be set up. It is done as follows.</p>
 
-<pre lang="library(doParallel)"><code>cl &lt;- makeCluster(detectCores())
+<pre><code>library(doParallel)    
+cl &lt;- makeCluster(detectCores())
 registerDoParallel(cl)
 </code></pre>
 
 <p>The input file is now loaded and unnecessary features are filtered out. These include columns with over 80% NA values, #DIV/0! values, timestamp, user name, window and summary statistics specific values.</p>
 
-<p>`trainfile &lt;- read.csv("pml-training.csv")</p>
+<pre><code>trainfile &lt;- read.csv("pml-training.csv")
+trainSub &lt;- trainfile[ , (colSums(is.na(trainfile)) &lt;= 0.8*nrow(trainfile))]
+trainSub &lt;- trainSub[,(colSums(trainSub[,] == "#DIV/0!")) == 0]
 
-<p>trainSub &lt;- trainfile[ , (colSums(is.na(trainfile)) &lt;= 0.8*nrow(trainfile))]</p>
+features &lt;- names(trainSub)
+toMatch &lt;- c("timestamp","name","window","kurtosis","skewness")
+trainSub &lt;- trainSub[,-grep(paste(toMatch,collapse="|"),features)]
+trainSub &lt;- trainSub[,-1]
+trainSub &lt;- trainSub[,-1]
+</code></pre>
 
-<p>trainSub &lt;- trainSub[,(colSums(trainSub[,] == "#DIV/0!")) == 0]`</p>
+<p>A 3 fold cross validation was used on a 50% training set sample to train the Random Forests model.</p>
 
-<p>The input file is now loaded and unnecessary features are filtered out. These include columns with over 80% NA values, #DIV/0! values, timestamp, user name, window and summary statistics specific values.</p>
+<pre><code>modControl &lt;- trainControl(method = "cv", number = 3)
+inTrain &lt;- createDataPartition(y= trainSub$classe, p=0.5, list=FALSE)
+training &lt;- trainSub[inTrain, ]
+testing &lt;- trainSub[-inTrain, ]
+modFit &lt;- train(classe ~ ., data = training, method = "rf", trControl = modControl, prox = TRUE)
+</code></pre>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="https://help.github.com/pages">https://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>The output of the model is as shown below:</p>
+
+<pre><code>Random Forest
+
+9812 samples 52 predictor 5 classes: ‘A’, ‘B’, ‘C’, ‘D’, ‘E’
+
+No pre-processing Resampling: Cross-Validated (3 fold)
+
+Summary of sample sizes: 6541, 6541, 6542
+
+Resampling results across tuning parameters:
+
+mtry Accuracy Kappa Accuracy SD Kappa SD
+2 0.9821650 0.9774326 0.002468435 0.003123457 27 0.9841012 0.9798868 0.001616820 0.002044145 52 0.9796169 0.9742139 0.001269553 0.001603578
+</code></pre>
+
+<p>Accuracy was used to select the optimal model using the largest value. The final value used for the model was mtry = 27.</p>
+
+<p>The insample accuracy of the final model was 0.984 and the corresponding Kappa value is 0.979 which indicates a very good model. The real test is the out of sample error rate though.</p>
+
+<pre><code>red &lt;- predict(modFit, testing)
+table(pred, testing$classe)
+</code></pre>
+
+<p>The output in this case is:</p>
+
+<pre><code>pred A B C D E A 2786 7 0 0 0 B 1 1881 7 1 1 C 0 10 1693 24 3 D 2 0 11 1582 13 E 1 0 0 1 1786
+</code></pre>
+
+<p>The out of sample error rate in this case is 0.835%. On the final test sample the predictions were also made as follows.</p>
+
+<pre><code>testfile &lt;- read.csv("pml-testing.csv")
+predOut &lt;- predict(modFit, testfile)
+</code></pre>
+
+<p>The obtained output in this case is as follows: “B”,“A”,“B”,“A”,“A”,“E”,“D”,“B”,“A”,“A”,“B”,“C”,“B”,“A”,“E”,“E”,“A”,“B”,“B”,“B”</p>
+
+<p>This output exactly matches the test set output. </p>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/Inquisitive-Geek/PML_Project_Roshan">Exercise Method Prediction Using Random Forests</a> is maintained by <a href="https://github.com/Inquisitive-Geek">Inquisitive-Geek</a>.</span>
