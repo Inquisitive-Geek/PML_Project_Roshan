@@ -41,9 +41,19 @@
 <a id="project-implementation-details" class="anchor" href="#project-implementation-details" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Implementation Details</h3>
 
 <p>The goal of the project is to predict the manner in which the group of enthusiasts did exercise. R has been used to implement the project. Since the dataset has a large number of variables, appropriate feature selection needs to be done. Before that, parallel processing in R needs to be set up. It is done as follows.
-<code>library(doParallel)    cl &lt;- makeCluster(detectCores())</code></p>
+<code>library(doParallel)</code>    </p>
+
+<p><code>cl &lt;- makeCluster(detectCores())</code></p>
 
 <p><code>registerDoParallel(cl)</code></p>
+
+<p>The input file is now loaded and unnecessary features are filtered out. These include columns with over 80% NA values, #DIV/0! values, timestamp, user name, window and summary statistics specific values.</p>
+
+<p>`trainfile &lt;- read.csv("pml-training.csv")</p>
+
+<p>trainSub &lt;- trainfile[ , (colSums(is.na(trainfile)) &lt;= 0.8*nrow(trainfile))]</p>
+
+<p>trainSub &lt;- trainSub[,(colSums(trainSub[,] == "#DIV/0!")) == 0]`</p>
 
 <p>The input file is now loaded and unnecessary features are filtered out. These include columns with over 80% NA values, #DIV/0! values, timestamp, user name, window and summary statistics specific values.</p>
 
